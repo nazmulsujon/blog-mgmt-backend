@@ -9,9 +9,10 @@ import config from '../../config';
 
 // create/register user into db
 const registerUserIntoDB = async (payload: TUser) => {
-  // checking user already exist
+  // get user from db
   const user = await User.findOne({ email: payload.email }).select('+password');
 
+  // checking user already exist
   if (user) {
     throw new AppError(
       StatusCodes.BAD_REQUEST,

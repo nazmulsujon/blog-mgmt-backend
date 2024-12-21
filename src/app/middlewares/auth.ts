@@ -1,45 +1,49 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import catchAsync from '../utils/catchAsync';
 import config from '../config';
 import AppError from '../errors/appError';
 import { StatusCodes } from 'http-status-codes';
-const auth = (...requiredRoles: string[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const extractedToken = req.headers.authorization;
-      const token = (extractedToken as string).split(' ')[1];
+import { User } from '../modules/user/user.model';
+import { TUserRole } from './auth.interface';
 
-      //if the token is sent from the client
-      if (!token) {
-        throw new AppError(401, 'You are not Authorized');
-      }
-
-      //Check if the token is valid
-      jwt.verify(
-        token,
-        config.jwt_access_secret as string,
-        function (err, decoded) {
-          if (err) {
-            throw new AppError(StatusCodes.UNAUTHORIZED, 'Invalid Token');
-          }
-          //   console.log("Decoded", decoded);
-          const role = (decoded as JwtPayload).role;
-          if (requiredRoles.length > 0 && !requiredRoles.includes(role)) {
-            // console.log("Required Roles: ", requiredRoles);
-            throw new AppError(
-              StatusCodes.UNAUTHORIZED,
-              'You are not Authorized as admin',
-            );
-          }
-
-          req.user = decoded as JwtPayload;
-          next();
-        },
-      );
-    } catch (error) {
-      next(error);
+const auth = (...requiredRoles: TUserRole[]) => {
+  return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const authToken = req.headers.authorization;
+    // checking the token
+    if (!authToken || !authToken.startsWith('Bearer ')) {
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized!');
     }
-  };
+    const token = authToken.split(' ')[1];
+    // checking if the given token is valid
+    const decoded = jwt.verify(
+      token,
+      config.jwt_access_secret as string,
+    ) as JwtPayload;
+
+    const { email, role, iat } = decoded;
+
+    // checking if the user is exist
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      throw new AppError(StatusCodes.NOT_FOUND, 'This user is not found!');
+    }
+
+    // checking if the user is blocked
+    const userStatus = user?.isBlocked;
+
+    if (userStatus) {
+      throw new AppError(StatusCodes.FORBIDDEN, 'This user is blocked!');
+    }
+
+    if (requiredRoles && !requiredRoles.includes(role)) {
+      throw new AppError(StatusCodes.UNAUTHORIZED, 'You are not authorized ');
+    }
+
+    req.user = decoded as JwtPayload;
+    next();
+  });
 };
 
 export default auth;
