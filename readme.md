@@ -301,3 +301,55 @@ Fetches all blogs with options for searching, sorting, and filtering.
   }
 
   ```
+  ---
+
+## Error Handling
+
+Error handling is crucial to ensure the application responds gracefully to unexpected situations, providing meaningful feedback while maintaining system stability.
+
+### Common Error Response Format:
+```json
+{
+  "success": false,
+  "message": "Error message describing the issue",
+  "statusCode": 400,
+  "error": { "details": "Additional error details, if applicable" },
+  "stack": "Error stack trace, if available"
+}
+```
+
+### Types of Errors Handled
+- **Zod Validation Error (ZOD_ERROR):** Invalid data inputs based on Zod schema validation.
+- **Not Found Error (NOT_FOUND_ERROR):** Resource not found.
+- **Validation Error (VALIDATION_ERROR):** General validation issues.
+- **Authentication Error (AUTH_ERROR):** Issues with failed authentication (e.g., invalid token).
+- **Authorization Error (AUTHORIZATION_ERROR):** Insufficient permissions to access a resource.
+- **Internal Server Error (INTERNAL_SERVER_ERROR):** Unhandled errors or unexpected server issues.
+
+By implementing these error handling mechanisms, we ensure a smooth user experience and easier debugging for developers.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js
+- MongoDB
+
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/nazmulsujon/blog-mgmt-backend.git
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file and add the necessary configurations (e.g., database URL, JWT secret).
+
+4. Start the server:
+   ```bash
+   npm run dev
+   ```
+
+---
